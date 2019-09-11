@@ -1,5 +1,4 @@
 import sys
-import fileinput
 
 #this class might not be needed at the moment leaving them in here just in case
 
