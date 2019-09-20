@@ -1,49 +1,13 @@
 import sys
 import time
-from datetime import datetime
-
-#this class might not be needed at the moment leaving them in here just in case
-
-# class Node:
-#     def __init__(self, value):
-#         self.value = value
-#         self.next = None
-#         self.visited = False
-    
-#     def CheckValue(self):
-#         print(self.value)
-    
-#     def CheckNext(self):
-#         print(self.next)
-
-
-#this class we may not need but I am leaving it in here just in case.
-
-# class Graph:
-#     def __init__(self, vertices):
-#         self.vertices = vertices
-#         self.list = [None] * (int(self.vertices) + 1)
-
-#     def AddEdge(self, source, dest):
-#         source = int(source)
-#         dest = int(dest)
-
-#         node = Node(dest)
-#         node.next = self.list[source]
-#         self.list[source] = node
-
-#         node = Node(source)
-#         node.next = self.list[dest]
-#         self.list[dest] = node
-
-
 
 if __name__ == "__main__":
 
-    startTime = time.time()
+    extend = " "
     if len(sys.argv) > 1:
         for x in range(0, len(sys.argv)):
             sys.argv[x] = sys.argv[x].lower()
+
             if sys.argv[x].__contains__(".txt"):
                 filename = sys.argv[x]
             elif sys.argv[x].__contains__("dest"):
@@ -52,24 +16,18 @@ if __name__ == "__main__":
                 search = sys.argv[x]
             elif sys.argv[x].__contains__("bfs"):
                 search = sys.argv[x]
-            elif sys.argv[x].__contains__("test"):
-                filename = "graph.txt"
-                search = "dfs"
-                dest = 6
+            elif sys.argv[x].__contains__("-e"):
+                extend = "true"
     else:
         print("please enter command line arguments")
         exit()
-    # filename = "graph.txt"
-    # dest = 10
-    # search = "dfs"
 
-
+    startTime = time.time()
     file = open(filename, "r")
     start = 1
 
     vertices = int(file.readline())
-    #for old way leave just in case
-    #graph = Graph(vertices)
+    global graph
     graph = {}
     edges = 0
     numOfVertices = 0
@@ -82,10 +40,8 @@ if __name__ == "__main__":
             info[vert] = int(info[vert])
         for vert in info:
             if vert != source:
-                #for old way leave just in case
-                #graph.AddEdge(source, int(vert))
                 graph[source] = set(info)
-
+    
     file.close()
 
     def dfs_paths(graph, start, goal):
@@ -96,8 +52,28 @@ if __name__ == "__main__":
             temp = set(path)
             for next in graph[vertex] - set(path):
                 if next == goal:
-                    yield path + [next]
+                    return [(edges, numOfVertices, path + [next])]
                 else:
+                    stack.append((next, path + [next]))
+                   
+                    edges += 1
+                numOfVertices += 1
+
+    def dfs_paths_ext(graph, start, goal):
+        global edges, numOfVertices
+        extSet = set()
+        stack = [(start, [start])]
+        while stack:
+            (vertex, path) = stack.pop()
+            list = graph[vertex] - set(path) - extSet
+            i = 0
+            for next in graph[vertex] - set(path):
+                i +=1
+                if next == goal:
+                    return [(edges, numOfVertices, path + [next])]
+                else:
+                    if(i == len(list)):
+                        extSet.add(vertex)
                     stack.append((next, path + [next]))
                     edges += 1
                 numOfVertices += 1
@@ -110,33 +86,45 @@ if __name__ == "__main__":
             numOfVertices += 1
             for next in graph[vertex] - set(path):
                 if next == goal:
-                    yield path + [next]
+                    
+                    return [(edges, numOfVertices, path +[next])]
                 else:
                     queue.append((next, path + [next]))
                     edges += 1
 
-
-
-    def shortestPathbfs(graph, start, dest):
-        try:
-            return next(bfs_paths(graph, start, dest))
-        except StopIteration:
-            return None
+    def bfs_paths_ext(graph, start, goal):
+        global edges, numOfVertices
+        extSet = set()
+        queue = [(start, [start])]
+        while queue:
+            (vertex, path) = queue.pop(0)
+            numOfVertices += 1
+            list = graph[vertex] - set(path) - extSet
+            j = 0
+            for next in list:
+                j+=1
+                if next == goal:
+                    return [(edges, numOfVertices, path + [next])]
+                else:
+                    if j == len(list):
+                        extSet.add(vertex)
+                    queue.append((next, path + [next]))
+                    edges += 1
     
-    def shortestPathdfs(graph, start, dest):
-        try:
-            return (next(dfs_paths(graph, start, dest)))
-        except StopIteration:
-            return None
-
-
     if search.__contains__("bfs"):
-        print(shortestPathbfs(graph, start, dest))
+        if extend == "true":
+            searchComp = bfs_paths_ext(graph, start, dest) 
+        else:
+            searchComp = bfs_paths(graph, start, dest)
     else:
-        print(shortestPathdfs(graph, start, dest))  
-    
-    print("edges %d" % edges)
-    print("vertices %d" % vertices)
-    
-
+        if extend == "true":
+            searchComp = dfs_paths_ext(graph, start, dest)
+        else:
+            searchComp = dfs_paths(graph, start, dest)
+        
+    listResult = list(searchComp[0])
+    print("Path:", end=" ")
+    print(" -- ".join(list(map(str,listResult[2]))))  
+    print("edges: %d" % listResult[0])
+    print("vertices: %d" % listResult[1])
     print("%.3f ms" % ((time.time() - startTime) * 1000))
